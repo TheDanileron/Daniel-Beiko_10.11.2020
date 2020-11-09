@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="btnPaddingVertical">8dp</dimen>
+    <dimen name="btnPaddingHorizontal">16dp</dimen>
+    <dimen name="btnWidth">200dp</dimen>
+    <dimen name="dayViewHolderWidth">50dp</dimen>
+    <dimen name="btnTextSize">18sp</dimen>
+    <dimen name="textSizeDefault">16sp</dimen>
+    <dimen name="textSizeLarge">18sp</dimen>
+    <dimen name="textSizeForecast">32sp</dimen>
+</resources>

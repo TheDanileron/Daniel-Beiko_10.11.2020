@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:background="@color/white"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:textSize="@dimen/textSizeLarge"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/addressTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingBottom="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:textSize="@dimen/textSizeDefault"
+        app:layout_constraintTop_toBottomOf="@id/addressTV"
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/dateTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingBottom="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:textSize="@dimen/textSizeForecast"
+        app:layout_constraintTop_toBottomOf="@id/dateTV"
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/tempTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingBottom="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:textSize="@dimen/textSizeDefault"
+        app:layout_constraintTop_toTopOf="@id/tempTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/windTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingBottom="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:textSize="@dimen/textSizeDefault"
+        app:layout_constraintTop_toBottomOf="@id/windTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/humidityTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <SeekBar
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingBottom="@dimen/btnPaddingVertical"
+        android:progress="0"
+        app:layout_constraintTop_toBottomOf="@id/humidityTV"
+        android:id="@+id/timeSeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        app:layout_constraintTop_toBottomOf="@id/timeSeekBar"
+        android:id="@+id/recyclerDays"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/btnPaddingVertical"
+    android:paddingBottom="@dimen/btnPaddingVertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:text="пн"
+        android:textSize="@dimen/textSizeLarge"
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:id="@+id/tvWeekDay"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:text="25"
+        android:textSize="@dimen/textSizeLarge"
+        android:paddingTop="@dimen/btnPaddingVertical"
+        android:paddingStart="@dimen/btnPaddingHorizontal"
+        android:paddingEnd="@dimen/btnPaddingHorizontal"
+        android:id="@+id/tvDayTemp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvWeekDay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MapsWeatherForecast</string>
+    <string name="str_forecast">Weather Forecast</string>
+    <string name="temp">%1$s \u2103</string>
+    <string name="humidity">humidity: %1$s</string>
+    <string name="wind">wind: %1$s km\/h</string>
+</resources>
