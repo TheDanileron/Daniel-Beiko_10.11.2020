@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
         viewModel.getForecastsLiveDate().observe(this, Observer {
-            if(it != null){
+            if(it != null && savedInstanceState == null){
                 supportFragmentManager.beginTransaction().replace(R.id.container, FragmentForecast()).addToBackStack("FORECAST").commit()
             }
         })

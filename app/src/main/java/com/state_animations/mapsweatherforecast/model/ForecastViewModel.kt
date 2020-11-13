@@ -102,6 +102,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
                 forecastListLiveData.postValue(result.list)
                 currentTimestampLiveData.postValue(result.list[0].dt)
                 startTimestamp = result.list[0].dt
+                selectedDay = 0
                 cacheHelper.writeResultToFile(result)
             }
 
@@ -124,6 +125,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
                 forecastListLiveData.postValue(result.list)
                 currentTimestampLiveData.postValue(result.list[0].dt)
                 startTimestamp = result.list[0].dt
+                selectedDay = 0
                 cacheHelper.writeResultToFile(result)
             }
 
