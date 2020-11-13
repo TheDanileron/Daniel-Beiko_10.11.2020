@@ -8,29 +8,23 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.state_animations.mapsweatherforecast.R
-import com.state_animations.mapsweatherforecast.model.DateHelper
-import com.state_animations.mapsweatherforecast.model.Day
-import com.state_animations.mapsweatherforecast.model.Forecast
-import com.state_animations.mapsweatherforecast.model.TempHelper
+import com.state_animations.mapsweatherforecast.model.*
 import kotlinx.android.synthetic.main.fragment_forecast.*
-import kotlinx.android.synthetic.main.fragment_forecast.view.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
 
 class FragmentForecast : Fragment() {
-    private var forecastList: MutableList<Forecast>? = null
+    private lateinit var viewModel: ForecastViewModel
     private val progressStepSize = 3
     private val progressMax = 24
-    private lateinit var address:String
-    private var startTimestamp:Long = 0
-    private var hourInMillis:Long = 3600000
+    private var hourInMillis: Long = 3600
     val format = SimpleDateFormat("EEE HH:mm", Locale.ENGLISH)
-    private var currentForecast: Forecast? = null
     lateinit var adapter: RecyclerAdapterDays
     private var timeSeekBar: SeekBar? = null
     private var addressTV: TextView? = null
@@ -38,17 +32,6 @@ class FragmentForecast : Fragment() {
     private var windTV: TextView? = null
     private var humidityTV: TextView? = null
     private var tempTV: TextView? = null
-
-    companion object{
-        fun newInstance(list: MutableList<Forecast>, address: String, timestamp: Long) : FragmentForecast{
-            val fragment = FragmentForecast()
-            fragment.forecastList = list
-            fragment.address = address
-            fragment.startTimestamp = timestamp
-            fragment.currentForecast = list[0]
-            return fragment
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,7 +42,7 @@ class FragmentForecast : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        retainInstance = true
+        viewModel = ViewModelProviders.of(requireActivity()).get(ForecastViewModel::class.java)
         super.onViewCreated(view, savedInstanceState)
         timeSeekBar = view.findViewById(R.id.timeSeekBar)
         addressTV = view.findViewById(R.id.addressTV)
@@ -71,12 +54,18 @@ class FragmentForecast : Fragment() {
             timeSeekBar?.incrementProgressBy(progressStepSize)
             timeSeekBar?.max = progressMax
             timeSeekBar?.progress = 0
-            timeSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            timeSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
                     val newProgress = progress.div(progressStepSize).times(progressStepSize)
                     timeSeekBar?.progress = newProgress
-                    val newTimestamp = startTimestamp + (newProgress * hourInMillis)
-                    currentForecast = getForecastByTimestamp(newTimestamp)
+                    val newTimestampSeconds = viewModel.getStartTime() + (newProgress * hourInMillis)
+                    getForecastByTimestamp(newTimestampSeconds)?.let {
+                        viewModel.setCurrentForecast(it)
+                    }
                     updateForecastInfo()
                 }
 
@@ -90,14 +79,15 @@ class FragmentForecast : Fragment() {
 
             })
         }
-        adapter = RecyclerAdapterDays(getDays(), object : OnDaySelectedListener{
+        adapter = RecyclerAdapterDays(getDays(), object : OnDaySelectedListener {
             override fun onSelected(day: Day, position: Int) {
                 adapter.setSelected(selected = position)
-                if(position == 0){
-                    currentForecast = forecastList?.get(0)
-                } else {
-                    currentForecast = getForecastByTimestamp(day.timestamp)
+
+                getForecastByTimestamp(day.timestamp)?.let {
+                    viewModel.setCurrentForecast(it)
+                    viewModel.setCurrentStartTime(it.dt)
                 }
+
                 timeSeekBar?.progress = 0
                 updateForecastInfo()
             }
@@ -106,21 +96,31 @@ class FragmentForecast : Fragment() {
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         recyclerDays.layoutManager = layoutManager
         recyclerDays.adapter = adapter
-        addressTV?.text = address
+        addressTV?.text = viewModel.getAddress()
         updateForecastInfo()
     }
 
-    fun getDays():MutableList<Day> {
+    fun getDays(): MutableList<Day> {
         val days = ArrayList<Day>()
-        if(forecastList?.get(0) != null){
-            days.add(Day(forecastList!![0].dt, forecastList!![0]))
+        if (viewModel.getForecasts()?.get(0) != null) {
+            days.add(
+                Day(
+                    viewModel.getForecasts()!![0].dt,
+                    viewModel.getForecasts()!![0]
+                )
+            )
         }
         val timeInSeconds = System.currentTimeMillis() / 1000
         val currentDayTimestamp: Long = (timeInSeconds / 86400) * 86400
         var increment = 86400
-        for(i in 1..4) {
+        for (i in 1..4) {
             val timestamp = currentDayTimestamp + increment
-            days.add(Day(DateHelper().fixTimestampLength(timestamp), getForecastByTimestamp(DateHelper().fixTimestampLength(timestamp))))
+            days.add(
+                Day(
+                    timestamp,
+                    getForecastByTimestamp(timestamp)
+                )
+            )
             increment += 86400
         }
 
@@ -128,31 +128,45 @@ class FragmentForecast : Fragment() {
     }
 
     private fun updateForecastInfo() {
-        dateTV?.text = format.format(DateHelper().fixTimestampLength(currentForecast?.dt!!))
-        tempTV?.text = getString(R.string.temp, TempHelper().kelvinToCelsius((currentForecast!!.main["temp"] as Double).toInt()).toString())
-        windTV?.text = getString(R.string.wind, currentForecast!!.wind["speed"].toString())
-        humidityTV?.text = getString(R.string.humidity, currentForecast!!.main["humidity"].toString())
+        dateTV?.text =
+            format.format(DateHelper().fixTimestampLength(viewModel.getCurrentForecast()?.dt!!))
+        tempTV?.text = getString(
+            R.string.temp,
+            TempHelper().kelvinToCelsius((viewModel.getCurrentForecast()!!.main["temp"] as Double).toInt())
+                .toString()
+        )
+        windTV?.text =
+            getString(R.string.wind, viewModel.getCurrentForecast()!!.wind["speed"].toString())
+        humidityTV?.text = getString(
+            R.string.humidity,
+            viewModel.getCurrentForecast()!!.main["humidity"].toString()
+        )
     }
 
-    private fun getForecastByTimestamp(timestamp: Long):Forecast? {
-        forecastList?.forEach {
-            if(DateHelper().fixTimestampLength(it.dt) == timestamp){
-                currentForecast = it
+    private fun getForecastByTimestamp(timestampSeconds: Long): Forecast? {
+        viewModel.getForecasts()?.forEach {
+            if (it.dt == timestampSeconds) {
+                return it
             }
         }
-        return currentForecast;
+        return viewModel.getCurrentForecast()
     }
 
     interface OnDaySelectedListener {
         fun onSelected(day: Day, position: Int);
     }
 
-    class RecyclerAdapterDays(var daysList: MutableList<Day>?, var onDayClick: OnDaySelectedListener) : RecyclerView.Adapter<DayViewHolder>() {
+    class RecyclerAdapterDays(
+        var daysList: MutableList<Day>?,
+        var onDayClick: OnDaySelectedListener
+    ) : RecyclerView.Adapter<DayViewHolder>() {
         private val daysCount = daysList?.size ?: 0
         private var selected = 0
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DayViewHolder {
-            return DayViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_day, parent, false))
+            return DayViewHolder(
+                LayoutInflater.from(parent.context).inflate(R.layout.view_holder_day, parent, false)
+            )
         }
 
         override fun getItemCount(): Int {
@@ -165,25 +179,28 @@ class FragmentForecast : Fragment() {
         }
 
         fun setSelected(selected: Int) {
-            val prevIndex= this.selected
+            val prevIndex = this.selected
             this.selected = selected
             notifyItemChanged(selected)
             notifyItemChanged(prevIndex)
         }
     }
 
-    class DayViewHolder(private val view: View): RecyclerView.ViewHolder(view) {
+    class DayViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
         private val format: SimpleDateFormat = SimpleDateFormat("EEE", Locale.ENGLISH)
         private var dayTV: TextView = view.findViewById(R.id.tvWeekDay)
         private var dayTemp: TextView = view.findViewById(R.id.tvDayTemp)
         private var day: Day? = null
 
-        fun bind (day: Day, isSelected: Boolean) {
+        fun bind(day: Day, isSelected: Boolean) {
             this.day = day
-            dayTV.text = (format.format(day.timestamp))
-            dayTemp.text = TempHelper().kelvinToCelsius((day.forecast?.main?.get("temp") as Double).toInt()).toString()
-            if(isSelected){
-                view.background = ContextCompat.getDrawable(view.context, R.drawable.selected_background)
+            dayTV.text = (format.format(DateHelper().fixTimestampLength(day.timestamp)))
+            dayTemp.text =
+                TempHelper().kelvinToCelsius((day.forecast?.main?.get("temp") as Double).toInt())
+                    .toString()
+            if (isSelected) {
+                view.background =
+                    ContextCompat.getDrawable(view.context, R.drawable.selected_background)
             } else {
                 view.background = null
             }
