@@ -18,7 +18,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB9Wg2xgkxkcLOYQjfD-pUQbYVQQvkbuqU" />
 
-        <activity  android:theme="@style/Theme.MapsWeatherForecastNoActionBar" android:name=".gui.activity.MainActivity">
+        <activity android:configChanges="keyboardHidden|orientation|screenSize" android:theme="@style/Theme.MapsWeatherForecastNoActionBar" android:name=".gui.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

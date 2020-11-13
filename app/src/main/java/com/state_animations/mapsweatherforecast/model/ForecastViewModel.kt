@@ -2,8 +2,11 @@ package com.state_animations.mapsweatherforecast.model
 
 import android.app.Application
 import android.location.Geocoder
+import androidx.arch.core.util.Function
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import com.google.android.gms.maps.model.LatLng
 import com.state_animations.mapsweatherforecast.app_data.CacheHelper
 import java.io.IOException
@@ -11,13 +14,32 @@ import java.util.*
 
 class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     private var forecastListLiveData: MutableLiveData<MutableList<Forecast>> = MutableLiveData()
-    private var currentForecast: MutableLiveData<Forecast>? = MutableLiveData()
+    private var currentTimestampLiveData: MutableLiveData<Long> = MutableLiveData()
+    private var currentForecast: LiveData<Forecast> = Transformations.map(currentTimestampLiveData, Function<Long, Forecast> {
+        getForecastByTimestamp(it)
+    })
     private var address: String? = null
-
     // current day starting time for seekbar
     private var startTimestamp: Long = 0
+    private var selectedDay: Int = 0
 
-    fun getCurrentForecastLiveData(): MutableLiveData<Forecast>? {
+    fun getSelectedDay() : Int{
+        return selectedDay
+    }
+
+    fun setSelectedDay(day: Int) {
+        selectedDay = day
+    }
+
+    fun getCurrentTimeLiveData(): MutableLiveData<Long>{
+        return currentTimestampLiveData
+    }
+
+    fun setCurrentTimeLiveData(timestamp: Long) {
+        currentTimestampLiveData.postValue(timestamp);
+    }
+
+    fun getCurrentForecastLiveData(): LiveData<Forecast>? {
         return currentForecast
     }
 
@@ -38,7 +60,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
             if (it.dt == timestampSeconds) {
                 if (setStartTime)
                     startTimestamp = it.dt
-                currentForecast?.postValue(it)
+                currentTimestampLiveData.postValue(timestampSeconds)
             }
         }
     }
@@ -53,12 +75,9 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun getCurrentForecast(): Forecast? {
-        return currentForecast?.value
+        return currentForecast.value
     }
 
-    fun setCurrentForecast(forecast: Forecast) {
-        currentForecast?.value = forecast
-    }
 
     fun getAddress(): String? {
         return address
@@ -81,7 +100,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         retrofitHelper.getForecast(addressStr, object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
-                currentForecast?.postValue(result.list[0])
+                currentTimestampLiveData.postValue(result.list[0].dt)
                 startTimestamp = result.list[0].dt
                 cacheHelper.writeResultToFile(result)
             }
@@ -103,7 +122,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         retrofitHelper.getForecast(latLng, latLngToAddress(latLng), object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
-                currentForecast?.postValue(result.list[0])
+                currentTimestampLiveData.postValue(result.list[0].dt)
                 startTimestamp = result.list[0].dt
                 cacheHelper.writeResultToFile(result)
             }

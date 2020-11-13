@@ -23,7 +23,7 @@ class FragmentForecast : Fragment() {
     private lateinit var viewModel: ForecastViewModel
     private val progressStepSize = 3
     private val progressMax = 24
-    private var hourInMillis: Long = 3600
+    private var hourInSeconds: Long = 3600
     val format = SimpleDateFormat("EEE HH:mm", Locale.ENGLISH)
     lateinit var adapter: RecyclerAdapterDays
     private var timeSeekBar: SeekBar? = null
@@ -57,7 +57,11 @@ class FragmentForecast : Fragment() {
         timeSeekBar?.post {
             timeSeekBar?.incrementProgressBy(progressStepSize)
             timeSeekBar?.max = progressMax
-            timeSeekBar?.progress = 0
+            var progress = 0
+            if(viewModel.getCurrentForecast() != null) {
+                progress = ((viewModel.getCurrentForecast()!!.dt - viewModel.getStartTime()) / (hourInSeconds)).toInt()
+            }
+            timeSeekBar?.progress = progress
             timeSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
                     seekBar: SeekBar?,
@@ -67,7 +71,7 @@ class FragmentForecast : Fragment() {
                     val newProgress = progress.div(progressStepSize).times(progressStepSize)
                     timeSeekBar?.progress = newProgress
                     val newTimestampSeconds =
-                        viewModel.getStartTime() + (newProgress * hourInMillis)
+                        viewModel.getStartTime() + (newProgress * hourInSeconds)
                     viewModel.updateCurrentForecast(newTimestampSeconds, false)
                 }
 
@@ -83,11 +87,12 @@ class FragmentForecast : Fragment() {
         }
         adapter = RecyclerAdapterDays(getDays(), object : OnDaySelectedListener {
             override fun onSelected(day: Day, position: Int) {
-                adapter.setSelected(selected = position)
+                viewModel.setSelectedDay(position)
+                adapter.onSelected(selected = position)
                 viewModel.updateCurrentForecast(day.timestamp, true)
                 timeSeekBar?.progress = 0
             }
-        })
+        }, viewModel.getSelectedDay())
         val layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         recyclerDays.layoutManager = layoutManager
@@ -144,10 +149,10 @@ class FragmentForecast : Fragment() {
 
     class RecyclerAdapterDays(
         var daysList: MutableList<Day>?,
-        var onDayClick: OnDaySelectedListener
+        var onDayClick: OnDaySelectedListener,
+        var selected: Int
     ) : RecyclerView.Adapter<DayViewHolder>() {
         private val daysCount = daysList?.size ?: 0
-        private var selected = 0
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DayViewHolder {
             return DayViewHolder(
@@ -164,7 +169,7 @@ class FragmentForecast : Fragment() {
             daysList?.get(position)?.let { holder.setClickListener(onDayClick, position) }
         }
 
-        fun setSelected(selected: Int) {
+        fun onSelected(selected: Int) {
             val prevIndex = this.selected
             this.selected = selected
             notifyItemChanged(selected)

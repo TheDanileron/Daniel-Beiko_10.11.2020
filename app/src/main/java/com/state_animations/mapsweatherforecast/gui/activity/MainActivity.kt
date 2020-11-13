@@ -79,9 +79,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         })
         viewModel.getForecastsLiveDate().observe(this, Observer {
             if(it != null){
-                supportFragmentManager.beginTransaction().replace(R.id.container, FragmentForecast()).addToBackStack("").commit()
+                supportFragmentManager.beginTransaction().replace(R.id.container, FragmentForecast()).addToBackStack("FORECAST").commit()
             }
         })
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
     }
 
     private fun getForecast(addressStr: String?) {
