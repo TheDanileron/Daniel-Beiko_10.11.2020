@@ -53,6 +53,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
             forecastListLiveData.postValue(result?.list)
             return
         }
+        address = addressStr
         retrofitHelper.getForecast(addressStr, object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
@@ -74,6 +75,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
             forecastListLiveData.postValue(result?.list)
             return
         }
+        address = latLngToAddress(latLng)
         retrofitHelper.getForecast(latLng, latLngToAddress(latLng), object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
