@@ -43,6 +43,10 @@ class FragmentForecast : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         viewModel = ViewModelProviders.of(requireActivity()).get(ForecastViewModel::class.java)
+        viewModel.getCurrentForecastLiveData()?.observe(this.viewLifecycleOwner, androidx.lifecycle.Observer {
+            if (it != null)
+                updateForecastInfo()
+        })
         super.onViewCreated(view, savedInstanceState)
         timeSeekBar = view.findViewById(R.id.timeSeekBar)
         addressTV = view.findViewById(R.id.addressTV)
@@ -62,11 +66,9 @@ class FragmentForecast : Fragment() {
                 ) {
                     val newProgress = progress.div(progressStepSize).times(progressStepSize)
                     timeSeekBar?.progress = newProgress
-                    val newTimestampSeconds = viewModel.getStartTime() + (newProgress * hourInMillis)
-                    getForecastByTimestamp(newTimestampSeconds)?.let {
-                        viewModel.setCurrentForecast(it)
-                    }
-                    updateForecastInfo()
+                    val newTimestampSeconds =
+                        viewModel.getStartTime() + (newProgress * hourInMillis)
+                    viewModel.updateCurrentForecast(newTimestampSeconds, false)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -82,14 +84,8 @@ class FragmentForecast : Fragment() {
         adapter = RecyclerAdapterDays(getDays(), object : OnDaySelectedListener {
             override fun onSelected(day: Day, position: Int) {
                 adapter.setSelected(selected = position)
-
-                getForecastByTimestamp(day.timestamp)?.let {
-                    viewModel.setCurrentForecast(it)
-                    viewModel.setCurrentStartTime(it.dt)
-                }
-
+                viewModel.updateCurrentForecast(day.timestamp, true)
                 timeSeekBar?.progress = 0
-                updateForecastInfo()
             }
         })
         val layoutManager =
@@ -97,7 +93,6 @@ class FragmentForecast : Fragment() {
         recyclerDays.layoutManager = layoutManager
         recyclerDays.adapter = adapter
         addressTV?.text = viewModel.getAddress()
-        updateForecastInfo()
     }
 
     fun getDays(): MutableList<Day> {
@@ -118,7 +113,7 @@ class FragmentForecast : Fragment() {
             days.add(
                 Day(
                     timestamp,
-                    getForecastByTimestamp(timestamp)
+                    viewModel.getForecastByTimestamp(timestamp)
                 )
             )
             increment += 86400
@@ -141,15 +136,6 @@ class FragmentForecast : Fragment() {
             R.string.humidity,
             viewModel.getCurrentForecast()!!.main["humidity"].toString()
         )
-    }
-
-    private fun getForecastByTimestamp(timestampSeconds: Long): Forecast? {
-        viewModel.getForecasts()?.forEach {
-            if (it.dt == timestampSeconds) {
-                return it
-            }
-        }
-        return viewModel.getCurrentForecast()
     }
 
     interface OnDaySelectedListener {

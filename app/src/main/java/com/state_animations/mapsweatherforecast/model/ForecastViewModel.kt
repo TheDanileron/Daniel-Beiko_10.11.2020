@@ -11,10 +11,15 @@ import java.util.*
 
 class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     private var forecastListLiveData: MutableLiveData<MutableList<Forecast>> = MutableLiveData()
-    private var currentForecast: Forecast? = null
+    private var currentForecast: MutableLiveData<Forecast>? = MutableLiveData()
     private var address: String? = null
+
     // current day starting time for seekbar
     private var startTimestamp: Long = 0
+
+    fun getCurrentForecastLiveData(): MutableLiveData<Forecast>? {
+        return currentForecast
+    }
 
     fun getForecastsLiveDate(): MutableLiveData<MutableList<Forecast>> {
         return forecastListLiveData
@@ -28,12 +33,31 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         return forecastListLiveData.value
     }
 
+    fun updateCurrentForecast(timestampSeconds: Long, setStartTime: Boolean) {
+        getForecasts()?.forEach {
+            if (it.dt == timestampSeconds) {
+                if (setStartTime)
+                    startTimestamp = it.dt
+                currentForecast?.postValue(it)
+            }
+        }
+    }
+
+    fun getForecastByTimestamp(timestampSeconds: Long): Forecast? {
+        getForecasts()?.forEach {
+            if (it.dt == timestampSeconds) {
+                return it
+            }
+        }
+        return null
+    }
+
     fun getCurrentForecast(): Forecast? {
-        return currentForecast
+        return currentForecast?.value
     }
 
     fun setCurrentForecast(forecast: Forecast) {
-        currentForecast = forecast
+        currentForecast?.value = forecast
     }
 
     fun getAddress(): String? {
@@ -57,7 +81,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         retrofitHelper.getForecast(addressStr, object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
-                currentForecast = result.list[0]
+                currentForecast?.postValue(result.list[0])
                 startTimestamp = result.list[0].dt
                 cacheHelper.writeResultToFile(result)
             }
@@ -79,7 +103,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         retrofitHelper.getForecast(latLng, latLngToAddress(latLng), object : ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
-                currentForecast = result.list[0]
+                currentForecast?.postValue(result.list[0])
                 startTimestamp = result.list[0].dt
                 cacheHelper.writeResultToFile(result)
             }
