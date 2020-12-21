@@ -1,15 +1,11 @@
 package com.state_animations.mapsweatherforecast.model
 
-import android.location.Geocoder
 import android.util.Log
-import android.view.View
 import com.google.android.gms.maps.model.LatLng
-import com.state_animations.mapsweatherforecast.R
-import com.state_animations.mapsweatherforecast.gui.fragments.FragmentForecast
+import com.state_animations.mapsweatherforecast.presentation.ForecastViewModel
 import com.state_animations.mapsweatherforecast.retrofit.RetrofitInterface
 import retrofit2.Call
 import retrofit2.Response
-import java.util.*
 import javax.security.auth.callback.Callback
 
 class RetrofitHelper {

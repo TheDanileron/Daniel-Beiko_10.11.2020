@@ -1,4 +1,4 @@
-package com.state_animations.mapsweatherforecast.model
+package com.state_animations.mapsweatherforecast.presentation
 
 import android.app.Application
 import android.location.Geocoder
@@ -8,7 +8,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.model.Place
 import com.state_animations.mapsweatherforecast.app_data.CacheHelper
+import com.state_animations.mapsweatherforecast.model.Forecast
+import com.state_animations.mapsweatherforecast.model.Result
+import com.state_animations.mapsweatherforecast.model.RetrofitHelper
 import java.io.IOException
 import java.util.*
 
@@ -22,6 +26,7 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     // current day starting time for seekbar
     private var startTimestamp: Long = 0
     private var selectedDay: Int = 0
+    private var latLng: LatLng? = null
 
     fun getSelectedDay() : Int{
         return selectedDay
@@ -43,12 +48,8 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         return currentForecast
     }
 
-    fun getForecastsLiveDate(): MutableLiveData<MutableList<Forecast>> {
+    fun getForecastsLiveData(): MutableLiveData<MutableList<Forecast>> {
         return forecastListLiveData
-    }
-
-    fun setCurrentStartTime(timestamp: Long) {
-        startTimestamp = timestamp
     }
 
     fun getForecasts(): MutableList<Forecast>? {
@@ -89,15 +90,34 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
 
     private val cacheHelper = CacheHelper(getApplication())
 
+    fun parseAddressAndGetForecast(place: Place) {
+        var addressStr = ""
+        var addressComponents = place.addressComponents?.asList()
+        addressComponents?.forEach {
+            if (it.types.contains("locality")) {
+                addressStr = it.name
+            } else if (it.types.contains("administrative_area")) {
+                addressStr = it.name
+            }
+
+            if (it.types.contains("country")) {
+                addressStr += "," + it.name
+            }
+        }
+        getForecast(addressStr)
+    }
+
     fun getForecast(addressStr: String) {
-        val retrofitHelper = RetrofitHelper()
+        val retrofitHelper =
+            RetrofitHelper()
         if (!isConnected()) {
             val result = cacheHelper.getCachedResult()
             forecastListLiveData.postValue(result?.list)
             return
         }
         address = addressStr
-        retrofitHelper.getForecast(addressStr, object : ForecastCallback {
+        retrofitHelper.getForecast(addressStr, object :
+            ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
                 currentTimestampLiveData.postValue(result.list[0].dt)
@@ -113,14 +133,16 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun getForecast(latLng: LatLng) {
-        val retrofitHelper = RetrofitHelper()
+        val retrofitHelper =
+            RetrofitHelper()
         if (!isConnected()) {
             val result = cacheHelper.getCachedResult()
             forecastListLiveData.postValue(result?.list)
             return
         }
         address = latLngToAddress(latLng)
-        retrofitHelper.getForecast(latLng, latLngToAddress(latLng), object : ForecastCallback {
+        retrofitHelper.getForecast(latLng, latLngToAddress(latLng), object :
+            ForecastCallback {
             override fun onResultReceived(result: Result) {
                 forecastListLiveData.postValue(result.list)
                 currentTimestampLiveData.postValue(result.list[0].dt)
@@ -164,5 +186,13 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         return "US"
+    }
+
+    fun getLatLng():LatLng? {
+        return latLng
+    }
+
+    fun setLatLng(latLng: LatLng?) {
+        this.latLng = latLng
     }
 }

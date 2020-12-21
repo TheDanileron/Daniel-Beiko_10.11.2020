@@ -1,4 +1,4 @@
-package com.state_animations.mapsweatherforecast.gui.fragments
+package com.state_animations.mapsweatherforecast.presentation.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.state_animations.mapsweatherforecast.R
 import com.state_animations.mapsweatherforecast.model.*
+import com.state_animations.mapsweatherforecast.presentation.ForecastViewModel
 import kotlinx.android.synthetic.main.fragment_forecast.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -68,6 +69,7 @@ class FragmentForecast : Fragment() {
                     progress: Int,
                     fromUser: Boolean
                 ) {
+                    // round up
                     val newProgress = progress.div(progressStepSize).times(progressStepSize)
                     timeSeekBar?.progress = newProgress
                     val newTimestampSeconds =

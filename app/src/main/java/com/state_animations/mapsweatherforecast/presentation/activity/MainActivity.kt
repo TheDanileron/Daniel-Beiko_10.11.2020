@@ -1,11 +1,10 @@
-package com.state_animations.mapsweatherforecast.gui.activity
+package com.state_animations.mapsweatherforecast.presentation.activity
 
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
@@ -14,14 +13,13 @@ import com.google.android.gms.common.api.Status
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
 import com.state_animations.mapsweatherforecast.R
-import com.state_animations.mapsweatherforecast.gui.fragments.FragmentForecast
-import com.state_animations.mapsweatherforecast.model.ForecastViewModel
+import com.state_animations.mapsweatherforecast.presentation.fragments.FragmentForecast
+import com.state_animations.mapsweatherforecast.presentation.ForecastViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -36,7 +34,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         forecastBtn.setOnClickListener {
-            getForecast(null)
+            if(viewModel.getLatLng() != null) {
+                viewModel.getForecast(viewModel.getLatLng()!!)
+            }
         }
         val autocompleteFragment =
             supportFragmentManager.findFragmentById(R.id.autocomplete_fragment)
@@ -56,20 +56,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
-                var addressStr = ""
-                var addressComponents = place.addressComponents?.asList()
-                addressComponents?.forEach {
-                    if (it.types.contains("locality")) {
-                        addressStr = it.name
-                    } else if (it.types.contains("administrative_area")) {
-                        addressStr = it.name
-                    }
-
-                    if (it.types.contains("country")) {
-                        addressStr += "," + it.name
-                    }
-                }
-                getForecast(addressStr)
+                viewModel.parseAddressAndGetForecast(place)
                 Log.i(TAG, "Place: ${place.name}, ${place.id}")
             }
 
@@ -77,33 +64,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.i(TAG, "An error occurred: $status")
             }
         })
-        viewModel.getForecastsLiveDate().observe(this, Observer {
+        viewModel.getForecastsLiveData().observe(this, Observer {
             if(it != null && savedInstanceState == null){
                 supportFragmentManager.beginTransaction().replace(R.id.container, FragmentForecast()).addToBackStack("FORECAST").commit()
             }
         })
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
-
-    private fun getForecast(addressStr: String?) {
-        if(addressStr != null){
-            viewModel.getForecast(addressStr)
-        } else if(latLng != null) {
-            viewModel.getForecast(latLng!!)
-        }
-    }
-
-    private var latLng: LatLng? = null
     override fun onMapReady(map: GoogleMap?) {
         if (map != null) {
             mMap = map
             mMap.setOnMapClickListener {
                 mMap.clear()
                 mMap.addMarker(MarkerOptions().position(it))
-                latLng = it
+                viewModel.setLatLng(it)
             }
         }
     }
