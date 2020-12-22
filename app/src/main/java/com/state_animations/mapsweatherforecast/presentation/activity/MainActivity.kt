@@ -5,6 +5,7 @@ import android.graphics.PorterDuffColorFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
@@ -34,9 +35,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         forecastBtn.setOnClickListener {
-            if(viewModel.getLatLng() != null) {
-                viewModel.getForecast(viewModel.getLatLng()!!)
-            }
+            viewModel.getForecast(viewModel.getLatLng())
         }
         val autocompleteFragment =
             supportFragmentManager.findFragmentById(R.id.autocomplete_fragment)
@@ -68,6 +67,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             if(it != null && savedInstanceState == null){
                 supportFragmentManager.beginTransaction().replace(R.id.container, FragmentForecast()).addToBackStack("FORECAST").commit()
             }
+        })
+        viewModel.getErrorLiveData().observe(this, Observer {
+            Toast.makeText(this, it, Toast.LENGTH_LONG).show()
         })
     }
 

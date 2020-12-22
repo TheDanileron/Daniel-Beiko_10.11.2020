@@ -18,8 +18,8 @@ class CacheHelper(val ctx: Context) {
 
     fun getCachedResult(): Result? {
         val fileName = ctx.cacheDir.path + "/" + "cached_forecast.dat"
-        val ois = ObjectInputStream(FileInputStream(fileName))
         if(File(fileName).exists()) {
+            val ois = ObjectInputStream(FileInputStream(fileName))
             return ois.readObject() as Result
         } else {
             return null
